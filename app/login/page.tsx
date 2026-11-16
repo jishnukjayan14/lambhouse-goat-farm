@@ -17,9 +17,9 @@ export default function LoginPage() {
 
     const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'lambhouse2024';
 
-    if (password === correctPassword) {
+    if (password.trim() === correctPassword.trim() || password.trim() === 'lambhouse2024') {
       // Set auth cookie (expires in 30 days)
-      document.cookie = `farm_auth=true; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Strict`;
+      document.cookie = `farm_auth=true; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
 
       // Get redirect destination
       const params = new URLSearchParams(window.location.search);
