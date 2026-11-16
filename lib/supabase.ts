@@ -11,8 +11,8 @@ import type {
   AppSettings,
 } from './types';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-project.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xplcldudxitijfkivuef.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_XVA4SXUPZgg0UfTetrDw1w_am6oN0Gk';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
