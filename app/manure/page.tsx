@@ -6,6 +6,12 @@ import { formatCurrency, formatDate, getTodayString, getCurrentMonthYear, getMon
 import { MANURE_TYPES } from "@/lib/constants";
 import type { Customer, ManureSale, ManureType, ManureUnit } from "@/lib/types";
 import { Plus, Filter } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const ManurePDFDownloadButton = dynamic(
+  () => import("@/components/invoice/ManureInvoicePDF").then(m => m.ManurePDFDownloadButton),
+  { ssr: false }
+);
 
 const UNIT_OPTIONS: { value: ManureUnit; label: string }[] = [
   { value: "bag", label: "Bag (50kg)" },
@@ -230,41 +236,60 @@ export default function ManurePage() {
               <th className="text-right px-4 py-3 font-medium text-gray-600">Qty</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600">Rate</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600">Amount</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600">Invoice / Bill</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {loading ? (
               Array.from({length: 4}).map((_, i) => (
                 <tr key={i}>
-                  <td colSpan={6} className="px-4 py-3"><div className="h-5 rounded skeleton" /></td>
+                  <td colSpan={7} className="px-4 py-3"><div className="h-5 rounded skeleton" /></td>
                 </tr>
               ))
             ) : filteredSales.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">No sales found for this period</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">No sales found for this period</td>
               </tr>
             ) : (
               filteredSales.map(sale => (
-                <tr key={sale.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-600">{formatDate(sale.date)}</td>
+                <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(sale.date)}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">{sale.buyer_name}</td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 bg-lime-100 text-lime-700 rounded-full text-xs font-medium">
+                    <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
                       {MANURE_TYPES[sale.product_type]?.label || sale.product_type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-600">{sale.quantity} {sale.unit}</td>
-                  <td className="px-4 py-3 text-right text-gray-600">{formatCurrency(sale.rate)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-green-700">{formatCurrency(sale.amount)}</td>
+                  <td className="px-4 py-3 text-right text-gray-700 whitespace-nowrap">{sale.quantity} {sale.unit}</td>
+                  <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">{formatCurrency(sale.rate)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-emerald-700 whitespace-nowrap">{formatCurrency(sale.amount)}</td>
+                  <td className="px-4 py-2.5 text-center whitespace-nowrap">
+                    <ManurePDFDownloadButton
+                      invoiceData={{
+                        invoice_number: `MNR-${sale.date.replace(/-/g, "").slice(2)}-${sale.id.slice(0, 4).toUpperCase()}`,
+                        buyer_name: sale.buyer_name,
+                        phone: sale.customer?.phone || null,
+                        address: sale.customer?.address || null,
+                        date: formatDate(sale.date),
+                        product_type: sale.product_type,
+                        quantity: sale.quantity,
+                        unit: sale.unit,
+                        rate: sale.rate,
+                        amount: sale.amount,
+                        notes: sale.notes || null,
+                      }}
+                    />
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
           {!loading && filteredSales.length > 0 && (
             <tfoot>
-              <tr className="bg-green-50 font-semibold">
-                <td colSpan={5} className="px-4 py-3 text-green-800">Total ({filteredSales.length} sales)</td>
-                <td className="px-4 py-3 text-right text-green-800">{formatCurrency(totalRevenue)}</td>
+              <tr className="bg-emerald-50/70 font-semibold border-t border-emerald-100">
+                <td colSpan={5} className="px-4 py-3 text-emerald-900">Total ({filteredSales.length} sales)</td>
+                <td className="px-4 py-3 text-right text-emerald-900 font-bold">{formatCurrency(totalRevenue)}</td>
+                <td className="px-4 py-3"></td>
               </tr>
             </tfoot>
           )}

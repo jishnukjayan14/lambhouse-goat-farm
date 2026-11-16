@@ -20,6 +20,8 @@ export interface Goat {
   father_id?: string | null;
   purchase_price: number | null;
   purchase_date: string | null;
+  sold_price: number | null;
+  sold_date: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -183,6 +185,7 @@ export interface MonthlyRevenue {
   year: number;
   milk_revenue: number;
   manure_revenue: number;
+  goat_revenue: number;
   total_revenue: number;
   total_expenses: number;
   net_profit: number;
@@ -214,4 +217,18 @@ export interface InvoiceData {
   advance_deduction: number;
   previous_balance: number;
   grand_total: number;
+}
+
+export interface ManureInvoiceData {
+  invoice_number: string;
+  buyer_name: string;
+  phone?: string | null;
+  address?: string | null;
+  date: string;
+  product_type: ManureType;
+  quantity: number;
+  unit: ManureUnit;
+  rate: number;
+  amount: number;
+  notes?: string | null;
 }

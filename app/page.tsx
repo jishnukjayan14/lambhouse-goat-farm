@@ -6,7 +6,7 @@ import { supabase, getMonthlyRevenueSummary } from "@/lib/supabase";
 import { formatCurrency, getMonthName, getCurrentMonthYear, getMonthDateRange } from "@/lib/utils";
 import { EXPENSE_CATEGORIES, GOAT_BREEDS } from "@/lib/constants";
 import type { Expense, GoatBreed, MonthlyRevenue, DailyMilkData } from "@/lib/types";
-import { TrendingUp, TrendingDown, Droplets, Users, Milk, Leaf } from "lucide-react";
+import { TrendingUp, TrendingDown, Droplets, Users, Milk, Leaf, DollarSign, Award } from "lucide-react";
 
 const MonthlyChart = dynamic(() => import("@/components/charts/MonthlyChart"), { ssr: false });
 const DailyMilkChart = dynamic(() => import("@/components/charts/DailyMilkChart"), { ssr: false });
@@ -16,18 +16,18 @@ function StatCard({ title, value, sub, icon: Icon, color, loading }: {
   title: string; value: string; sub?: string; icon: React.ElementType; color: string; loading?: boolean;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-      <div className={`p-3 rounded-lg ${color}`}>
-        <Icon className="w-6 h-6 text-white" />
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-emerald-900/10 p-5 flex items-center gap-4">
+      <div className={`p-3 rounded-xl shadow-sm ${color}`}>
+        <Icon className="w-5 h-5 text-white" />
       </div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{title}</p>
         {loading ? (
           <div className="h-6 w-24 mt-1 rounded skeleton" />
         ) : (
-          <p className="text-xl font-bold text-gray-800 leading-tight">{value}</p>
+          <p className="text-xl font-black text-gray-800 leading-tight mt-0.5">{value}</p>
         )}
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+        {sub && <p className="text-xs text-gray-500 mt-1 font-medium">{sub}</p>}
       </div>
     </div>
   );
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [milkRevenue, setMilkRevenue] = useState(0);
   const [manureRevenue, setManureRevenue] = useState(0);
+  const [goatRevenue, setGoatRevenue] = useState(0);
   const [expenses, setExpenses] = useState(0);
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
   const [activeGoats, setActiveGoats] = useState(0);
@@ -52,11 +53,12 @@ export default function DashboardPage() {
         const { startDate, endDate } = getMonthDateRange(month, year);
 
         const [
-          milkRes, manureRes, expenseRes, recentExpRes,
+          milkRes, manureRes, goatSalesRes, expenseRes, recentExpRes,
           goatRes, custRes, monthlyRes, dailyRes, breedRes,
         ] = await Promise.all([
           supabase.from("milk_deliveries").select("amount").gte("date", startDate).lte("date", endDate).eq("status", "delivered"),
           supabase.from("manure_sales").select("amount").gte("date", startDate).lte("date", endDate),
+          supabase.from("goats").select("sold_price").eq("status", "sold").gte("sold_date", startDate).lte("sold_date", endDate),
           supabase.from("expenses").select("amount").gte("date", startDate).lte("date", endDate),
           supabase.from("expenses").select("*").gte("date", startDate).lte("date", endDate).order("date", { ascending: false }).limit(5),
           supabase.from("goats").select("id", { count: "exact" }).eq("status", "active"),
@@ -66,11 +68,14 @@ export default function DashboardPage() {
           supabase.from("goats").select("breed").eq("status", "active"),
         ]);
 
-        const milkTotal = (milkRes.data || []).reduce((s, r) => s + r.amount, 0);
-        const manureTotal = (manureRes.data || []).reduce((s, r) => s + r.amount, 0);
-        const expTotal = (expenseRes.data || []).reduce((s, r) => s + r.amount, 0);
+        const milkTotal = (milkRes.data || []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+        const manureTotal = (manureRes.data || []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+        const goatTotal = (goatSalesRes.data || []).reduce((s, r) => s + (Number(r.sold_price) || 0), 0);
+        const expTotal = (expenseRes.data || []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+
         setMilkRevenue(milkTotal);
         setManureRevenue(manureTotal);
+        setGoatRevenue(goatTotal);
         setExpenses(expTotal);
         setRecentExpenses(recentExpRes.data || []);
         setActiveGoats(goatRes.count || 0);
@@ -107,41 +112,54 @@ export default function DashboardPage() {
     loadDashboard();
   }, [month, year]);
 
-  const netProfit = milkRevenue + manureRevenue - expenses;
+  const totalRevenue = milkRevenue + manureRevenue + goatRevenue;
+  const netProfit = totalRevenue - expenses;
   const isProfit = netProfit >= 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{getMonthName(month)} {year}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-emerald-950/10 pb-4">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+            <span>Farm Overview</span>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              Lambhouse
+            </span>
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5 font-medium">{getMonthName(month)} {year} Financial & Livestock Report</p>
+        </div>
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="col-span-2 md:col-span-3 lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 p-5 flex flex-col justify-between">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Net Profit</p>
+        <div className="col-span-2 md:col-span-3 lg:col-span-2 bg-gradient-to-br from-emerald-900 via-green-900 to-emerald-950 text-white rounded-2xl shadow-lg p-5 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 bg-white/5 rounded-full blur-xl pointer-events-none" />
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-emerald-200 uppercase tracking-widest">Net Profit ({getMonthName(month)})</p>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isProfit ? "bg-emerald-500/30 text-emerald-200" : "bg-red-500/30 text-red-200"}`}>
+              {isProfit ? "Profitable" : "Deficit"}
+            </span>
+          </div>
           {loading ? (
             <div className="h-10 w-32 mt-2 rounded skeleton" />
           ) : (
-            <div>
-              <p className={`text-3xl font-bold leading-tight ${isProfit ? "text-green-700" : "text-red-600"}`}>
+            <div className="mt-3">
+              <p className={`text-3xl font-black tracking-tight ${isProfit ? "text-white" : "text-red-300"}`}>
                 {formatCurrency(netProfit)}
               </p>
-              <div className="flex items-center gap-1 mt-1">
-                {isProfit ? <TrendingUp className="w-4 h-4 text-green-500" /> : <TrendingDown className="w-4 h-4 text-red-500" />}
-                <span className={`text-xs font-medium ${isProfit ? "text-green-600" : "text-red-500"}`}>
-                  {isProfit ? "Profitable month" : "Loss this month"}
-                </span>
+              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-emerald-200/80 font-medium">
+                {isProfit ? <TrendingUp className="w-4 h-4 text-emerald-400" /> : <TrendingDown className="w-4 h-4 text-red-400" />}
+                <span>Total Income: {formatCurrency(totalRevenue)}</span>
               </div>
             </div>
           )}
         </div>
 
-        <StatCard title="Milk Revenue" value={formatCurrency(milkRevenue)} icon={Milk} color="bg-green-600" loading={loading} />
-        <StatCard title="Manure Revenue" value={formatCurrency(manureRevenue)} icon={Leaf} color="bg-lime-600" loading={loading} />
-        <StatCard title="Expenses" value={formatCurrency(expenses)} icon={TrendingDown} color="bg-red-500" loading={loading} />
-        <StatCard title="Active Goats" value={String(activeGoats)} sub={`${activeCustomers} customers`} icon={Droplets} color="bg-blue-500" loading={loading} />
+        <StatCard title="Milk Revenue" value={formatCurrency(milkRevenue)} icon={Milk} color="bg-emerald-700" loading={loading} />
+        <StatCard title="Manure Sales" value={formatCurrency(manureRevenue)} icon={Leaf} color="bg-lime-700" loading={loading} />
+        <StatCard title="Goat Sales" value={formatCurrency(goatRevenue)} icon={DollarSign} color="bg-teal-700" loading={loading} />
+        <StatCard title="Farm Expenses" value={formatCurrency(expenses)} icon={TrendingDown} color="bg-rose-600" loading={loading} />
+        <StatCard title="Active Herd" value={String(activeGoats)} sub={`${activeCustomers} active milk customers`} icon={Droplets} color="bg-blue-600" loading={loading} />
       </div>
 
       {/* Charts Row */}

@@ -348,7 +348,7 @@ export async function getMonthlyRevenueSummary(months: number = 6) {
     const year = d.getFullYear();
     const { startDate, endDate } = getMonthDateRange(month, year);
 
-    const [milkRes, manureRes, expenseRes] = await Promise.all([
+    const [milkRes, manureRes, goatRes, expenseRes] = await Promise.all([
       supabase
         .from('milk_deliveries')
         .select('amount')
@@ -360,6 +360,12 @@ export async function getMonthlyRevenueSummary(months: number = 6) {
         .select('amount')
         .gte('date', startDate)
         .lte('date', endDate),
+      supabase
+        .from('goats')
+        .select('sold_price')
+        .eq('status', 'sold')
+        .gte('sold_date', startDate)
+        .lte('sold_date', endDate),
       supabase
         .from('expenses')
         .select('amount')
@@ -375,19 +381,26 @@ export async function getMonthlyRevenueSummary(months: number = 6) {
       (sum, r) => sum + (r.amount || 0),
       0
     );
+    const goatRevenue = (goatRes.data || []).reduce(
+      (sum, r) => sum + (Number(r.sold_price) || 0),
+      0
+    );
     const totalExpenses = (expenseRes.data || []).reduce(
       (sum, r) => sum + (r.amount || 0),
       0
     );
+
+    const totalRevenue = milkRevenue + manureRevenue + goatRevenue;
 
     results.push({
       month,
       year,
       milk_revenue: milkRevenue,
       manure_revenue: manureRevenue,
-      total_revenue: milkRevenue + manureRevenue,
+      goat_revenue: goatRevenue,
+      total_revenue: totalRevenue,
       total_expenses: totalExpenses,
-      net_profit: milkRevenue + manureRevenue - totalExpenses,
+      net_profit: totalRevenue - totalExpenses,
     });
   }
 

@@ -22,6 +22,8 @@ const defaultForm = {
   status: "active" as GoatStatus,
   purchase_price: "",
   purchase_date: "",
+  sold_price: "",
+  sold_date: "",
   notes: "",
 };
 
@@ -68,6 +70,8 @@ export default function GoatsPage() {
       status: goat.status,
       purchase_price: goat.purchase_price ? String(goat.purchase_price) : "",
       purchase_date: goat.purchase_date || "",
+      sold_price: goat.sold_price ? String(goat.sold_price) : "",
+      sold_date: goat.sold_date || "",
       notes: goat.notes || "",
     });
     setShowModal(true);
@@ -88,6 +92,8 @@ export default function GoatsPage() {
         mother_id: null,
         purchase_price: form.purchase_price ? parseFloat(form.purchase_price) : null,
         purchase_date: form.purchase_date || null,
+        sold_price: form.status === "sold" && form.sold_price ? parseFloat(form.sold_price) : null,
+        sold_date: form.status === "sold" && form.sold_date ? form.sold_date : null,
         notes: form.notes || null,
       });
       setShowModal(false);
@@ -236,14 +242,31 @@ export default function GoatsPage() {
                     <td className="px-4 py-3 text-gray-500">{goat.birth_date ? formatDate(goat.birth_date) : "—"}</td>
                     <td className="px-4 py-3 text-gray-600 text-xs">{age}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        goat.status === "active" ? "bg-green-100 text-green-700"
-                        : goat.status === "sold" ? "bg-blue-100 text-blue-700"
-                        : goat.status === "deceased" ? "bg-red-100 text-red-700"
-                        : "bg-gray-100 text-gray-700"
-                      }`}>
-                        {goat.status.charAt(0).toUpperCase() + goat.status.slice(1)}
-                      </span>
+                      {goat.status === "sold" ? (
+                        <div className="flex flex-col">
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 w-fit">
+                            Sold
+                          </span>
+                          {goat.sold_price && (
+                            <span className="text-[11px] font-bold text-emerald-700 mt-0.5">
+                              ₹{goat.sold_price.toLocaleString()}
+                            </span>
+                          )}
+                          {goat.sold_date && (
+                            <span className="text-[10px] text-gray-400">
+                              {formatDate(goat.sold_date)}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          goat.status === "active" ? "bg-green-100 text-green-700"
+                          : goat.status === "deceased" ? "bg-red-100 text-red-700"
+                          : "bg-gray-100 text-gray-700"
+                        }`}>
+                          {goat.status.charAt(0).toUpperCase() + goat.status.slice(1)}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center">
@@ -321,6 +344,35 @@ export default function GoatsPage() {
                   <input type="date" value={form.purchase_date} onChange={e => setForm(f => ({ ...f, purchase_date: e.target.value }))}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-600" />
                 </div>
+                {form.status === "sold" && (
+                  <>
+                    <div className="bg-blue-50/70 p-2.5 rounded-lg border border-blue-200 col-span-2 grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-blue-800 mb-1">Sold Price (₹) *</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={form.sold_price}
+                          onChange={e => setForm(f => ({ ...f, sold_price: e.target.value }))}
+                          placeholder="e.g. 15000"
+                          className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-600 bg-white"
+                          required={form.status === "sold"}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-blue-800 mb-1">Sold Date *</label>
+                        <input
+                          type="date"
+                          value={form.sold_date}
+                          onChange={e => setForm(f => ({ ...f, sold_date: e.target.value }))}
+                          max={getTodayString()}
+                          className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-600 bg-white"
+                          required={form.status === "sold"}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
