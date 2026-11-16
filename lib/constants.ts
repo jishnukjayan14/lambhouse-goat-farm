@@ -8,6 +8,8 @@ export const FARM_PHONE1 = '7306874214';
 export const FARM_PHONE2 = '9061237526';
 export const FARM_PHONE3 = '7902650760';
 export const FARM_UPI = '7306874214-2@ybl';
+export const FARMLINK_WHATSAPP_PHONE = '916235034409';
+export const FARMLINK_WHATSAPP_LINK = 'https://wa.me/916235034409';
 
 export const DEFAULT_MILK_RATE = 30; // ₹ per glass
 export const ML_PER_GLASS = 200;

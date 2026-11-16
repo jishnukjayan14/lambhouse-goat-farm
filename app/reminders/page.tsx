@@ -9,7 +9,7 @@ import {
   formatWhatsAppReminderMessage,
   getWhatsAppShareUrl,
 } from "@/lib/utils";
-import { FARM_PHONE1 } from "@/lib/constants";
+import { FARM_PHONE1, FARMLINK_WHATSAPP_PHONE, FARMLINK_WHATSAPP_LINK } from "@/lib/constants";
 import type { Goat, GoatEvent, GoatEventType } from "@/lib/types";
 import {
   Bell,
@@ -256,7 +256,7 @@ export default function RemindersPage() {
       ev.notes,
       ev.vet_name
     );
-    const url = getWhatsAppShareUrl(msg, FARM_PHONE1);
+    const url = getWhatsAppShareUrl(msg, FARMLINK_WHATSAPP_PHONE);
     window.open(url, "_blank");
   };
 
@@ -587,6 +587,41 @@ export default function RemindersPage() {
           })}
         </div>
       )}
+
+      {/* Farmlink WhatsApp Automation & Official Reminder Link */}
+      <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-green-950 text-white rounded-2xl p-5 shadow-lg border border-emerald-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-700/60 border border-emerald-500/30 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            📲
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-800/80 px-2 py-0.5 rounded border border-emerald-600/40">
+                Farmlink Official Automation
+              </span>
+              <span className="text-xs font-mono text-emerald-300">
+                +91 6235034409
+              </span>
+            </div>
+            <h3 className="text-base font-black tracking-tight mt-1">
+              Farmlink Official WhatsApp Reminders
+            </h3>
+            <p className="text-xs text-emerald-100/90 mt-0.5">
+              വാട്സാപ്പിലേക്ക് ഓട്ടോമാറ്റിക് ആയിട്ട് മെസ്സേജ് വരാൻ ഫാംലിങ്ക് ഒഫീഷ്യൽ വാട്സാപ്പ് ലിങ്ക് ഉപയോഗിക്കാം.
+            </p>
+          </div>
+        </div>
+
+        <a
+          href={FARMLINK_WHATSAPP_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black px-5 py-2.5 rounded-xl text-xs shadow-md hover:shadow-lg transition-all flex-shrink-0"
+        >
+          <Share2 className="w-4 h-4" />
+          <span>Open Farmlink WhatsApp</span>
+        </a>
+      </div>
 
       {/* Add / Edit Modal */}
       {showModal && (

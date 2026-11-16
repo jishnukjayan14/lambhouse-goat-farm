@@ -247,6 +247,32 @@ export default function SettingsPage() {
         </div>
       </form>
 
+      {/* WhatsApp & Farmlink Automation Section */}
+      <SettingsSection title="WhatsApp & Farmlink Automation">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
+              Official WhatsApp Reminder Link
+            </span>
+            <h3 className="text-base font-bold text-gray-900 mt-1">Farmlink WhatsApp Gateway</h3>
+            <p className="text-xs text-gray-600 mt-0.5">
+              Phone: <span className="font-mono font-bold text-emerald-900">+91 6235034409</span>
+            </p>
+            <p className="text-xs text-emerald-800 mt-1">
+              വാട്സാപ്പിലേക്ക് ഓട്ടോമാറ്റിക് ആയിട്ട് മെസ്സേജ് വരാൻ ഫാംലിങ്ക് ഒഫീഷ്യൽ വാട്സാപ്പ് ലിങ്ക് ഉപയോഗിക്കാം.
+            </p>
+          </div>
+          <a
+            href="https://wa.me/916235034409"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-colors flex-shrink-0"
+          >
+            <span>Open WhatsApp (+91 6235034409)</span>
+          </a>
+        </div>
+      </SettingsSection>
+
       {/* Change Password */}
       <SettingsSection title="Change Password">
         <form onSubmit={handleChangePassword} className="max-w-sm space-y-4">
