@@ -100,14 +100,11 @@ export interface Expense {
 }
 
 export type GoatEventType =
-  | 'birth'
-  | 'purchase'
-  | 'sale'
-  | 'death'
   | 'vaccination'
+  | 'treatment'
   | 'deworming'
-  | 'breeding'
   | 'kidding'
+  | 'weaning'
   | 'weight_check'
   | 'other';
 
@@ -116,9 +113,11 @@ export interface GoatEvent {
   goat_id: string;
   event_type: GoatEventType;
   date: string; // ISO date string
-  description: string;
-  amount: number | null;
-  related_goat_id: string | null;
+  description: string | null;
+  cost: number | null;
+  vet_name: string | null;
+  next_due_date: string | null;
+  notes: string | null;
   created_at: string;
   // joined
   goat?: Goat;

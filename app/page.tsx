@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { supabase, getMonthlyRevenueSummary } from "@/lib/supabase";
-import { formatCurrency, getMonthName, getCurrentMonthYear, getMonthDateRange } from "@/lib/utils";
-import { EXPENSE_CATEGORIES, GOAT_BREEDS } from "@/lib/constants";
-import type { Expense, GoatBreed, MonthlyRevenue, DailyMilkData } from "@/lib/types";
-import { TrendingUp, TrendingDown, Droplets, Users, Milk, Leaf, DollarSign, Award } from "lucide-react";
+import Link from "next/link";
+import { supabase, getMonthlyRevenueSummary, getUpcomingGoatEvents } from "@/lib/supabase";
+import { formatCurrency, getMonthName, getCurrentMonthYear, getMonthDateRange, formatDate, getWhatsAppShareUrl, formatWhatsAppReminderMessage } from "@/lib/utils";
+import { EXPENSE_CATEGORIES, GOAT_BREEDS, FARM_PHONE1 } from "@/lib/constants";
+import type { Expense, GoatBreed, MonthlyRevenue, DailyMilkData, GoatEvent } from "@/lib/types";
+import { TrendingUp, TrendingDown, Droplets, Users, Milk, Leaf, DollarSign, Bell, ArrowRight, Share2, Calendar } from "lucide-react";
 
 const MonthlyChart = dynamic(() => import("@/components/charts/MonthlyChart"), { ssr: false });
 const DailyMilkChart = dynamic(() => import("@/components/charts/DailyMilkChart"), { ssr: false });
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   const [monthlyData, setMonthlyData] = useState<MonthlyRevenue[]>([]);
   const [dailyMilk, setDailyMilk] = useState<DailyMilkData[]>([]);
   const [breedData, setBreedData] = useState<{ breed: GoatBreed; count: number }[]>([]);
+  const [upcomingReminders, setUpcomingReminders] = useState<GoatEvent[]>([]);
 
   useEffect(() => {
     async function loadDashboard() {
@@ -54,7 +56,7 @@ export default function DashboardPage() {
 
         const [
           milkRes, manureRes, goatSalesRes, expenseRes, recentExpRes,
-          goatRes, custRes, monthlyRes, dailyRes, breedRes,
+          goatRes, custRes, monthlyRes, dailyRes, breedRes, remindersRes,
         ] = await Promise.all([
           supabase.from("milk_deliveries").select("amount").gte("date", startDate).lte("date", endDate).eq("status", "delivered"),
           supabase.from("manure_sales").select("amount").gte("date", startDate).lte("date", endDate),
@@ -66,6 +68,7 @@ export default function DashboardPage() {
           getMonthlyRevenueSummary(6),
           supabase.from("milk_deliveries").select("date, amount, glasses").gte("date", startDate).lte("date", endDate).eq("status", "delivered").order("date"),
           supabase.from("goats").select("breed").eq("status", "active"),
+          getUpcomingGoatEvents(7).catch(() => [] as GoatEvent[]),
         ]);
 
         const milkTotal = (milkRes.data || []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
@@ -103,6 +106,7 @@ export default function DashboardPage() {
           breedCount.set(g.breed, (breedCount.get(g.breed) || 0) + 1);
         }
         setBreedData(Array.from(breedCount.entries()).map(([breed, count]) => ({ breed: breed as GoatBreed, count })));
+        setUpcomingReminders(remindersRes || []);
       } catch (err) {
         console.error("Dashboard load error:", err);
       } finally {
@@ -129,6 +133,49 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-500 mt-0.5 font-medium">{getMonthName(month)} {year} Financial & Livestock Report</p>
         </div>
       </div>
+
+      {/* Upcoming Health & Care Alerts (Next 7 Days) */}
+      {upcomingReminders.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-2 border-amber-300 rounded-2xl p-4 sm:p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-sm flex-shrink-0 mt-0.5">
+                <Bell className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">
+                    Health & Care Notice
+                  </span>
+                  <span className="text-xs font-bold text-amber-900">
+                    {upcomingReminders.length} task(s) due within the next 7 days!
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-amber-950">
+                  {upcomingReminders.slice(0, 3).map(rem => (
+                    <span key={rem.id} className="inline-flex items-center gap-1 font-medium">
+                      <span>•</span>
+                      <b>{rem.goat?.name || "Goat"}:</b>
+                      <span>{rem.description} ({formatDate(rem.date)})</span>
+                    </span>
+                  ))}
+                  {upcomingReminders.length > 3 && (
+                    <span className="text-amber-700 font-semibold">+{upcomingReminders.length - 3} more</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/reminders"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow transition-all flex-shrink-0 self-start sm:self-center"
+            >
+              <span>View All Reminders</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

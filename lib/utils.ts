@@ -190,15 +190,70 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 /**
- * Debounce a function
+ * Calculate estimated kidding / delivery date from mating date (150 days gestation)
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
-  fn: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let timer: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
+export function calculateGestationDueDate(matingDateStr: string): string {
+  if (!matingDateStr) return '';
+  const d = new Date(matingDateStr);
+  if (isNaN(d.getTime())) return '';
+  d.setDate(d.getDate() + 150);
+  return d.toISOString().split('T')[0];
 }
+
+/**
+ * Format WhatsApp notification message for goat health / reminder
+ */
+export function formatWhatsAppReminderMessage(
+  title: string,
+  goatName: string,
+  tagNumber: string | null,
+  eventType: string,
+  dueDate: string,
+  notes?: string | null,
+  vetOrIncharge?: string | null
+): string {
+  const typeIcons: Record<string, string> = {
+    vaccination: '💉 Vaccination Alert',
+    treatment: '💊 Medication / Treatment',
+    deworming: '🪱 Deworming Schedule',
+    kidding: '🍼 Expected Delivery / Kidding',
+    weaning: '🌾 Kid Weaning',
+    weight_check: '⚖️ Weight Check',
+    other: '📋 Farm Health Reminder',
+  };
+
+  const typeHeader = typeIcons[eventType] || '📋 Care Reminder';
+  const tagDisplay = tagNumber ? ` (Tag: ${tagNumber})` : '';
+
+  let msg = `🐐 *THE LAMB HOUSE GOAT FARM*\n`;
+  msg += `*${typeHeader.toUpperCase()}*\n\n`;
+  msg += `• *Task:* ${title}\n`;
+  msg += `• *Goat:* ${goatName}${tagDisplay}\n`;
+  msg += `• *Due Date:* ${formatDate(dueDate)}\n`;
+
+  if (notes) {
+    msg += `• *Details / Dosage:* ${notes}\n`;
+  }
+  if (vetOrIncharge) {
+    msg += `• *In-charge / Vet:* ${vetOrIncharge}\n`;
+  }
+
+  msg += `\n_Please take required action in advance!_\n`;
+  msg += `📍 _Mananthavady, Wayanad_`;
+
+  return msg;
+}
+
+/**
+ * Generate direct WhatsApp URL (to a specific phone or open share chooser)
+ */
+export function getWhatsAppShareUrl(message: string, phone?: string): string {
+  const encoded = encodeURIComponent(message);
+  if (phone && phone.trim()) {
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const fullPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    return `https://wa.me/${fullPhone}?text=${encoded}`;
+  }
+  return `https://api.whatsapp.com/send?text=${encoded}`;
+}
+

@@ -7,6 +7,7 @@ import type {
   ManureSale,
   Expense,
   GoatEvent,
+  GoatEventType,
   Invoice,
   AppSettings,
 } from './types';
@@ -406,3 +407,83 @@ export async function getMonthlyRevenueSummary(months: number = 6) {
 
   return results;
 }
+
+/** Fetch all goat health events & reminders */
+export async function getAllGoatEvents() {
+  const { data, error } = await supabase
+    .from('goat_events')
+    .select('*, goat:goats(*)')
+    .order('date', { ascending: false });
+  if (error) {
+    console.error('getAllGoatEvents error:', error);
+    throw error;
+  }
+  return data as GoatEvent[];
+}
+
+/** Fetch upcoming events within next N days */
+export async function getUpcomingGoatEvents(daysAhead: number = 7) {
+  const today = new Date();
+  const future = new Date();
+  future.setDate(today.getDate() + daysAhead);
+
+  const todayStr = today.toISOString().split('T')[0];
+  const futureStr = future.toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('goat_events')
+    .select('*, goat:goats(*)')
+    .gte('date', todayStr)
+    .lte('date', futureStr)
+    .order('date', { ascending: true });
+
+  if (error) {
+    console.error('getUpcomingGoatEvents error:', error);
+    throw error;
+  }
+  return data as GoatEvent[];
+}
+
+/** Upsert a goat event / reminder */
+export async function upsertGoatEvent(event: {
+  id?: string;
+  goat_id: string;
+  event_type: GoatEventType;
+  date: string;
+  description?: string | null;
+  cost?: number | null;
+  vet_name?: string | null;
+  next_due_date?: string | null;
+  notes?: string | null;
+}) {
+  const { id, ...payload } = event;
+  if (id) {
+    const { data, error } = await supabase
+      .from('goat_events')
+      .update(payload)
+      .eq('id', id)
+      .select('*, goat:goats(*)')
+      .single();
+    if (error) throw error;
+    return data as GoatEvent;
+  } else {
+    const { data, error } = await supabase
+      .from('goat_events')
+      .insert(payload)
+      .select('*, goat:goats(*)')
+      .single();
+    if (error) throw error;
+    return data as GoatEvent;
+  }
+}
+
+/** Delete a goat event */
+export async function deleteGoatEvent(id: string) {
+  const { error } = await supabase
+    .from('goat_events')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+  return true;
+}
+
